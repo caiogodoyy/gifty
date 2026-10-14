@@ -2,10 +2,10 @@
 
 import { useFormStatus } from "react-dom";
 
-export function SubmitButton({ children, className = "btn" }: { children: React.ReactNode; className?: string }) {
+export function SubmitButton({ children, className = "btn", disabled = false }: { children: React.ReactNode; className?: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={className}>
+    <button type="submit" disabled={pending || disabled} className={className}>
       {pending ? "Aguarde…" : children}
     </button>
   );

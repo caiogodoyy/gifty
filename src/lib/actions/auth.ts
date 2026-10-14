@@ -5,11 +5,11 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { EMAIL_RE, passwordValid } from "@/lib/validation";
 import { createSession, destroySession } from "@/lib/auth";
 
 export type FormState = { error?: string } | undefined;
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const str = (v: FormDataEntryValue | null) => (typeof v === "string" ? v.trim() : "");
 
 export async function register(_: FormState, formData: FormData): Promise<FormState> {
@@ -19,7 +19,7 @@ export async function register(_: FormState, formData: FormData): Promise<FormSt
 
   if (name.length < 2) return { error: "Informe seu nome." };
   if (!EMAIL_RE.test(email)) return { error: "E-mail inválido." };
-  if (password.length < 8) return { error: "A senha precisa ter ao menos 8 caracteres." };
+  if (!passwordValid(password)) return { error: "A senha precisa ter 8+ caracteres, letras, números e uma letra maiúscula." };
 
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (existing) return { error: "Este e-mail já está cadastrado." };
