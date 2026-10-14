@@ -38,7 +38,7 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
       {isOwner && (
         <section className="card space-y-3">
           <h2 className="font-semibold">Código de convite</h2>
-          <p className="select-all rounded-xl bg-stone-100 px-4 py-3 text-center font-mono text-xl tracking-widest">
+          <p className="select-all rounded-xl bg-sage-50 px-4 py-3 text-center font-mono text-xl tracking-widest">
             {group.inviteCode}
           </p>
           <form action={regenerateCode.bind(null, group.id)}>

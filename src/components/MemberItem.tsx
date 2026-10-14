@@ -12,7 +12,7 @@ type Props = {
 export function MemberItem({ item, reservedByName, reservedByMe, canCancel }: Props) {
   const reserved = reservedByName !== null;
   return (
-    <li className={`card ${reserved ? "border-gold-200 bg-gold-50" : ""}`}>
+    <li className={`card ${reserved ? "border-gold-200 bg-gold-50 ring-1 ring-gold-100" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-medium">{item.name}</p>

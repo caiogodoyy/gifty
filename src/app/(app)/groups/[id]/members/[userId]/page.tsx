@@ -55,7 +55,7 @@ export default async function MemberPage({ params }: { params: { id: string; use
       <section className="card space-y-3">
         <div className="grid grid-cols-3 gap-3 text-center">
           {sizes.map(([label, value]) => (
-            <div key={label} className="rounded-xl bg-stone-100 p-3">
+            <div key={label} className="rounded-xl bg-sage-50 p-3">
               <p className="text-xs text-stone-500">{label}</p>
               <p className="mt-1 font-semibold">{value || "—"}</p>
             </div>

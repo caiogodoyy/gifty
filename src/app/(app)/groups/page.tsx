@@ -33,7 +33,7 @@ export default async function GroupsPage({ searchParams }: { searchParams: { nov
           <Link
             href={showBoxes ? "/groups" : "/groups?novo=1"}
             aria-label="Criar ou entrar em um grupo"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-900 text-2xl leading-none text-white hover:bg-stone-700"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-terracotta-600 text-2xl leading-none text-white hover:bg-terracotta-700"
           >
             {showBoxes ? "×" : "+"}
           </Link>
@@ -44,7 +44,7 @@ export default async function GroupsPage({ searchParams }: { searchParams: { nov
         <ul className="grid gap-3 sm:grid-cols-2">
           {mine.map((g) => (
             <li key={g.id}>
-              <Link href={`/groups/${g.id}`} className="card block transition hover:border-stone-300">
+              <Link href={`/groups/${g.id}`} className="card block transition hover:border-sage-300 hover:bg-sage-50">
                 <p className="font-semibold">{g.name}</p>
                 <p className="mt-1 text-sm text-stone-500">
                   {countOf.get(g.id) ?? 1} membro(s){g.ownerId === user.id ? " · você é o criador" : ""}
