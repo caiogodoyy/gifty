@@ -51,26 +51,30 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
 
       <section className="space-y-3">
         <h2 className="font-semibold">Membros ({members.length})</h2>
+        <p className="text-sm text-stone-500">Clique em um membro para ver a lista de desejos.</p>
         <ul className="space-y-2">
-          {members.map((m) => (
-            <li key={m.id} className="card flex items-center justify-between gap-3 !p-3">
-              {m.id === user.id ? (
-                <Link href="/wishlist" className="font-medium hover:underline">{m.name} <span className="text-stone-400">(você)</span></Link>
-              ) : (
-                <Link href={`/groups/${group.id}/members/${m.id}`} className="font-medium hover:underline">
-                  {m.name}
+          {members.map((m) => {
+            const me = m.id === user.id;
+            return (
+              <li key={m.id} className="card flex items-center gap-2 !p-0 transition hover:border-sage-200 hover:bg-sage-50">
+                <Link
+                  href={me ? "/wishlist" : `/groups/${group.id}/members/${m.id}`}
+                  className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl p-3"
+                >
+                  <span className="truncate font-medium">
+                    {m.name}
+                    {me && <span className="text-stone-400"> (você)</span>}
+                    {m.id === group.ownerId && <span className="ml-2 text-xs font-normal text-stone-500">criador</span>}
+                  </span>
                 </Link>
-              )}
-              <div className="flex items-center gap-2">
-                {m.id === group.ownerId && <span className="text-xs text-stone-500">criador</span>}
-                {isOwner && m.id !== user.id && (
-                  <form action={removeMember.bind(null, group.id, m.id)}>
+                {isOwner && !me && (
+                  <form action={removeMember.bind(null, group.id, m.id)} className="pr-3">
                     <ConfirmButton message={`Remover ${m.name} do grupo?`}>Remover</ConfirmButton>
                   </form>
                 )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
