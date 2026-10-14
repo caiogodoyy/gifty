@@ -1,3 +1,4 @@
+import { AccountForms } from "@/components/AccountForms";
 import { ProfileForm } from "@/components/ProfileForm";
 import { requireUser } from "@/lib/auth";
 
@@ -10,6 +11,7 @@ export default async function ProfilePage() {
         <p className="text-sm text-stone-500">Seus tamanhos ficam visíveis para quem está nos seus grupos.</p>
       </div>
       <ProfileForm profile={user} />
+      <AccountForms key={`${user.name}|${user.email}`} name={user.name} email={user.email} />
     </>
   );
 }
