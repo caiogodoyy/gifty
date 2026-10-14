@@ -6,9 +6,9 @@ export default {
     extend: {
       fontFamily: { sans: ["ui-sans-serif", "system-ui", "Inter", "sans-serif"] },
       colors: {
-        cream: { 50: "#fbf8f3", 100: "#f5f0e6", 200: "#e9e1d0", 300: "#d8cdb6" },
-        sage: { 50: "#f1f5ee", 100: "#e0e9d9", 200: "#c3d3b6", 500: "#7f9c6e", 600: "#668558", 700: "#506946" },
-        terracotta: { 50: "#fbf0ec", 100: "#f6ddd3", 200: "#ebbba9", 500: "#cc6b49", 600: "#b85a3a", 700: "#954830" },
+        cream: { 50: "#fbfaf7", 100: "#f4f2ec", 200: "#e8e5dc", 300: "#d6d2c6" },
+        sage: { 50: "#f2f6f0", 100: "#e2eadf", 200: "#c8d8c3", 500: "#9db596", 600: "#7a9873", 700: "#5f7b59" },
+        terracotta: { 50: "#fbf1ed", 100: "#f6dfd5", 200: "#ebc0ae", 500: "#c97b5a", 600: "#b8694a", 700: "#9a5238" },
         gold: { 50: "#fffbea", 100: "#fdf0b8", 200: "#f6df7e", 400: "#e8b84a", 700: "#8a6516" },
       },
     },
