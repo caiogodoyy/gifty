@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { groupMembers, groups, users } from "@/db/schema";
+import { groupMembers, groups, secretSanta, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { deleteGroup, leaveGroup, regenerateCode, removeMember } from "@/lib/actions/groups";
+import { SecretSantaForm } from "@/components/SecretSantaForm";
 import { ConfirmButton } from "@/components/ConfirmButton";
 
 export default async function GroupPage({ params }: { params: { id: string } }) {
@@ -28,11 +29,27 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
 
   const isOwner = group.ownerId === user.id;
 
+  // só a linha do próprio usuário é consultada: ninguém vê o sorteio dos outros
+  const [mine] = await db
+    .select({ name: users.name })
+    .from(secretSanta)
+    .innerJoin(users, eq(users.id, secretSanta.receiverId))
+    .where(and(eq(secretSanta.groupId, group.id), eq(secretSanta.giverId, user.id)))
+    .limit(1);
+
   return (
     <>
       <div>
         <Link href="/groups" className="text-sm text-stone-500 hover:underline">← Grupos</Link>
-        <h1 className="mt-1 text-2xl font-semibold">{group.name}</h1>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">{group.name}</h1>
+          <SecretSantaForm
+            groupId={group.id}
+            isOwner={isOwner}
+            members={members.map((m) => m.name)}
+            receiverName={mine?.name ?? null}
+          />
+        </div>
       </div>
 
       {isOwner && (

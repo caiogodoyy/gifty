@@ -4,8 +4,9 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { groupMembers, groups, MAX_GROUPS } from "@/db/schema";
+import { groupMembers, groups, MAX_GROUPS, secretSanta, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { drawSecretSanta } from "@/lib/secretSanta";
 import { groupIdsOf } from "@/lib/access";
 import type { FormState } from "./auth";
 
@@ -68,7 +69,10 @@ export async function joinGroup(_: FormState, formData: FormData): Promise<FormS
   if (!group) return { error: "Código inválido ou expirado." };
   if (mine.includes(group.id)) redirect(`/groups/${group.id}`);
 
-  await db.insert(groupMembers).values({ groupId: group.id, userId: user.id });
+  await db.batch([
+    db.insert(groupMembers).values({ groupId: group.id, userId: user.id }),
+    db.delete(secretSanta).where(eq(secretSanta.groupId, group.id)), // novo membro: o sorteio precisa ser refeito
+  ]);
   revalidatePath("/groups");
   redirect(`/groups/${group.id}`);
 }
@@ -82,13 +86,17 @@ export async function regenerateCode(groupId: string) {
 export async function removeMember(groupId: string, userId: string) {
   const { user } = await requireOwner(groupId);
   if (userId === user.id) throw new Error("O criador não pode se remover; delete o grupo.");
-  await db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)));
+  await db.batch([
+    db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId))),
+    db.delete(secretSanta).where(eq(secretSanta.groupId, groupId)), // sorteio deixa de valer
+  ]);
   revalidatePath(`/groups/${groupId}`);
 }
 
 export async function deleteGroup(groupId: string) {
   await requireOwner(groupId);
   await db.batch([
+    db.delete(secretSanta).where(eq(secretSanta.groupId, groupId)),
     db.delete(groupMembers).where(eq(groupMembers.groupId, groupId)),
     db.delete(groups).where(eq(groups.id, groupId)),
   ]);
@@ -101,7 +109,37 @@ export async function leaveGroup(groupId: string) {
   const [group] = await db.select().from(groups).where(eq(groups.id, groupId)).limit(1);
   if (!group) redirect("/groups");
   if (group.ownerId === user.id) throw new Error("O criador não pode sair; delete o grupo.");
-  await db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, user.id)));
+  await db.batch([
+    db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, user.id))),
+    db.delete(secretSanta).where(eq(secretSanta.groupId, groupId)), // sorteio deixa de valer
+  ]);
   revalidatePath("/groups");
   redirect("/groups");
+}
+
+export async function drawSecretSantaAction(groupId: string, _: FormState): Promise<FormState & { ok?: string }> {
+  const { group } = await requireOwner(groupId);
+
+  const members = await db
+    .select({ id: groupMembers.userId })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, group.id));
+  if (members.length < 1) return { error: "O grupo não tem membros." };
+
+  const pairs = drawSecretSanta(members);
+  await db.batch([
+    db.delete(secretSanta).where(eq(secretSanta.groupId, group.id)),
+    ...pairs.map((p) =>
+      db.insert(secretSanta).values({ groupId: group.id, giverId: p.giver.id, receiverId: p.receiver.id }),
+    ),
+  ]);
+  revalidatePath(`/groups/${group.id}`);
+  return { ok: "Sorteio realizado! Cada membro já pode ver quem tirou." };
+}
+
+export async function endSecretSantaAction(groupId: string, _: FormState): Promise<FormState & { ok?: string }> {
+  await requireOwner(groupId);
+  await db.delete(secretSanta).where(eq(secretSanta.groupId, groupId));
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: "Sorteio encerrado." };
 }

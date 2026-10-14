@@ -49,3 +49,16 @@ export const reservations = sqliteTable("reservations", {
 });
 
 export const MAX_GROUPS = 3;
+
+// Sorteio de amigo secreto: um par (quem presenteia -> quem recebe) por membro.
+// Telas só consultam a linha do próprio usuário (giverId = usuário logado).
+export const secretSanta = sqliteTable(
+  "secret_santa",
+  {
+    groupId: text("group_id").notNull().references(() => groups.id, { onDelete: "cascade" }),
+    giverId: text("giver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    receiverId: text("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(now),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.groupId, t.giverId] }) }),
+);
