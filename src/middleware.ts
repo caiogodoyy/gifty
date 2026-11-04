@@ -6,9 +6,11 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
-  if (!userId && !isAuthPage) return NextResponse.redirect(new URL("/login", req.url));
+  const isPublicPage = pathname === "/forgot-password" || pathname === "/reset-password";
+
+  if (!userId && !isAuthPage && !isPublicPage) return NextResponse.redirect(new URL("/login", req.url));
   if (userId && isAuthPage) return NextResponse.redirect(new URL("/groups", req.url));
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/groups/:path*", "/wishlist/:path*", "/profile/:path*", "/login", "/register"] };
+export const config = { matcher: ["/groups/:path*", "/wishlist/:path*", "/profile/:path*", "/login", "/register", "/forgot-password", "/reset-password"] };

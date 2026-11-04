@@ -7,7 +7,7 @@ import { SubmitButton } from "./SubmitButton";
 import { login, register } from "@/lib/actions/auth";
 import { EMAIL_RE, PASSWORD_RULES, passwordValid } from "@/lib/validation";
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?: string }) {
   const [state, action] = useFormState(mode === "login" ? login : register, undefined);
   const isLogin = mode === "login";
   const [email, setEmail] = useState("");
@@ -60,6 +60,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           })}
         </ul>
       )}
+      {isLogin && (
+        <p className="text-right text-sm">
+          <Link href="/forgot-password" className="text-stone-500 underline">Esqueceu a senha?</Link>
+        </p>
+      )}
+      {notice && !state?.error && <p className="text-sm text-sage-700">{notice}</p>}
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <SubmitButton disabled={!canSubmit} className="btn w-full">{isLogin ? "Entrar" : "Cadastrar"}</SubmitButton>
       <p className="text-center text-sm text-stone-500">

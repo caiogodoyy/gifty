@@ -62,3 +62,10 @@ export const secretSanta = sqliteTable(
   },
   (t) => ({ pk: primaryKey({ columns: [t.groupId, t.giverId] }) }),
 );
+
+// Tokens de redefinição de senha. Guarda só o SHA-256 do token enviado por e-mail; uso único e expiram.
+export const passwordResets = sqliteTable("password_resets", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+});

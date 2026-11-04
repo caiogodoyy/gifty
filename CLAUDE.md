@@ -1,146 +1,98 @@
-# CLAUDE.md - Soma Fitness AI Telegram Bot ($0 Stack - Privado)
+# CLAUDE.md - Gifty
 
-## Visão Geral do Projeto
-**Soma** é um assistente de IA ultra-simples e privado via Telegram para acompanhamento de dieta e treino exclusivo para **Caio** e **Bel**. 
+> **Manutenção deste arquivo:** sempre que houver mudanças relevantes no app (novas funcionalidades, alterações no schema, nas regras de sigilo/autorização, nas variáveis de ambiente, nos comandos ou na estrutura de pastas), atualize este `CLAUDE.md` na mesma tarefa.
 
-O sistema opera a custo zero ($0/mês). Para minimizar a complexidade da aplicação, **os dados estáticos (metas e treinos) ficam definidos em arquivo de código (`profiles.py`)**, enquanto o banco de dados (Supabase) armazena apenas o vínculo do Telegram ID e os registros de consumo diário.
+## Visão Geral
+**Gifty** é um app web em português (pt-BR) de listas de presentes em grupo (família e amigos) com **reserva secreta** e **amigo secreto**. Quem ganha o presente nunca vê o que foi reservado por outros. O app foi pensado para rodar 100% nos planos gratuitos da Vercel e do Turso.
 
----
+## Stack
+- Next.js 14 (App Router, Server Components, Server Actions) + React 18
+- Tailwind CSS 3
+- Turso (LibSQL) + Drizzle ORM (`dialect: "turso"`; em dev local use `file:local.db`)
+- Auth própria: bcryptjs (cost 10) + JWT HS256 (`jose`) em cookie httpOnly
+- Vitest para testes unitários
+- TypeScript; alias `@/*` → `src/*`
 
-## Arquitetura de Dados e Perfis Estáticos (`profiles.py`)
+## Comandos
+- `npm install` — instala dependências
+- `cp .env.example .env` — preencher variáveis
+- `npm run db:push` — aplica o schema Drizzle no banco (não há migrations versionadas; `drizzle/` não existe)
+- `npm run dev` — servidor em http://localhost:3000
+- `npm run build` / `npm run start` — build e serve de produção
+- `npm run lint` — apenas checagem de tipos (`tsc --noEmit`), sem ESLint
+- `npm test` — `vitest run`
 
-### Prompt de Sistema Base (Persona)
-> "Você é o **Soma**, um especialista fitness atualizado com base nos estudos científicos mais recentes que envolvem Ortopedia, Fisiologia do Exercício, Nutrição Esportiva e Bioquímica Nutricional, Biomecânica e Cinesiologia, Endocrinologia e Cronobiologia e Ciência da Recuperação."
+## Variáveis de Ambiente
+| Variável | Descrição |
+| --- | --- |
+| `TURSO_DATABASE_URL` | `libsql://...` ou `file:local.db` (padrão se ausente) |
+| `TURSO_AUTH_TOKEN` | Token do Turso (desnecessário com `file:`) |
+| `AUTH_SECRET` | Segredo do JWT, mínimo 16 caracteres; `jwt.ts` lança erro se ausente/curto |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Envio do e-mail de redefinição via SMTP (nodemailer; porta padrão 465). Sem `SMTP_HOST` em dev, o link é impresso no console; em produção o envio falha |
+| `EMAIL_FROM` | Remetente (padrão: `SMTP_USER`) |
+| `APP_URL` | URL pública usada no link de redefinição (padrão `http://localhost:3000`) |
 
----
+## Funcionalidades
+- **Conta:** cadastro/login com e-mail e senha; sessão JWT de 30 dias. Senha: 8+ caracteres, letras, números e ao menos uma maiúscula (`lib/validation.ts`, também usada para validação em tempo real nos formulários). Em `/profile` é possível editar nome/e-mail (trocar e-mail exige senha atual) e alterar a senha.
+- **Esqueci a senha:** `/forgot-password` envia um link (`/reset-password?token=...`) válido por 60 min e de uso único; só o SHA-256 do token fica em `password_resets`. A resposta é a mesma exista o e-mail ou não. Pedir novo link invalida os anteriores; redefinir apaga todos os tokens do usuário. Sessões JWT já emitidas **não** são invalidadas.
+- **Perfil:** tamanhos de blusa, calça e calçado + observações livres.
+- **Lista de desejos (`/wishlist`):** adicionar, editar e remover itens (nome ≤120, descrição ≤500, link ≤500; link sem protocolo recebe `https://`). A lista é **por usuário** e aparece em todos os grupos dele.
+- **Reserva secreta:** outros membros reservam itens na página do membro; badge amarelo "Reservado". O dono nunca vê reservas. Quem reservou pode cancelar; o criador do grupo também pode cancelar reservas de membros do seu grupo.
+- **Grupos:** máximo de `MAX_GROUPS = 3` por usuário (definido em `db/schema.ts`). Código de convite no formato `SOBRENOME-1234`.
+  - Criador: vê e regera o código, remove membros, deleta o grupo, realiza/encerra o amigo secreto. Não pode sair (deve deletar).
+  - Membro: pode sair a qualquer momento; clica em um membro para ver a lista de desejos dele.
+- **Amigo secreto:** o criador sorteia na página do grupo (`SecretSantaForm`, modal). Cada membro vê apenas quem tirou. Entrada de novo membro, remoção ou saída de membro **apagam o sorteio do grupo** (precisa ser refeito).
 
-### Definição dos Perfis em Código
+## Modelo de Dados (`src/db/schema.ts`)
+IDs são `crypto.randomUUID()` (text); datas são `integer` modo `timestamp`.
+- `users` — id, name, email (unique), passwordHash (bcrypt), shirtSize, pantsSize, shoeSize, notes, createdAt
+- `groups` — id, name, inviteCode (unique), ownerId → users, createdAt
+- `group_members` — PK (groupId, userId), joinedAt; cascade em groups/users
+- `items` — id, userId → users (cascade), name, description, url, createdAt
+- `reservations` — PK itemId (uma reserva por item), reservedBy → users, createdAt
+- `password_resets` — PK tokenHash (SHA-256), userId → users (cascade), expiresAt
+- `secret_santa` — PK (groupId, giverId), receiverId, createdAt
 
-```python
-# profiles.py
-
-PERFIS = {
-    "bel": {
-        "nome": "Bel",
-        "meta_calorias": 1700,
-        "meta_proteina": 120,
-        "meta_gordura": 60,
-        "meta_carboidrato": 170,
-        "dados": "Mulher, 24 anos, 1,68m, 60kg, ~21,8% gordura. Estudante de Medicina.",
-        "objetivo": "Recomposição corporal (perder gordura em coxas/braços mantendo massa magra e foco cognitivo).",
-        "treinos": {
-            "Segunda": "Treino A (Quad/Glúteo): Agachamento Búlgaro/Livre (3x8-10), Leg Press 45° (3x10-12), Cadeira Extensora (3x12-15 c/ pausa 1s), Elevação Pélvica c/ Barra (4x10-12), Cadeira Abdutora (3x15-20) + Cárdio LISS (25-30 min).",
-            "Terça": "Pilates (Core, Mobilidade, Estabilidade).",
-            "Quarta": "Pilates (Postura e Resistência Localizada).",
-            "Quinta": "Treino B (Superiores/Braços): Puxada Alta Neutra (3x10-12), Remada Baixa Triângulo (3x10-12), Desenvolvimento Halteres (3x10-12), Elevação Lateral Polia/Halteres (4x12-15), Tríceps Corda (3x12-15), Rosca Alternada (3x12-15) + Cárdio LISS (25-30 min).",
-            "Sexta": "Treino C (Posterior/Glúteo): Stiff Halteres (3x8-10), Mesa Flexora (3x10-12), Cadeira Flexora (3x12-15), Glúteo Polia (3x12-15), Panturrilha em Pé (4x15) + Cárdio LISS (25-30 min).",
-            "Sábado": "Descanso Total / Recuperação.",
-            "Domingo": "Descanso Total / Recuperação."
-        }
-    },
-    "caio": {
-        "nome": "Caio",
-        "meta_calorias": 2350,
-        "meta_proteina": 170,
-        "meta_gordura": 70,
-        "meta_carboidrato": 260,
-        "dados": "Homem, 24 anos, 1,83m, 80kg. Engenheiro de Software (40h/semana).",
-        "objetivo": "Perda de gordura abdominal, hipertrofia de peitoral e condicionamento para futebol.",
-        "treinos": {
-            "Segunda": "Peitoral, Ombro Anterior/Lateral e Tríceps: Supino Reto Barra/Halter (4x6-8), Supino Inclinado Halter (4x8-10), Crossover Polia (3x10-12), Desenvolvimento Halter (3x8-10), Elevação Lateral (4x12-15), Tríceps Testa/Corda (3x10-12) + Caminhada inclinada (15-20 min).",
-            "Terça": "Costas, Bíceps e Core: Puxada Alta Articulada (4x8-10), Remada Curvada/Baixa (4x8-10), Crucifixo Invertido/Face Pull (3x12-15), Rosca Direta Barra W (3x10-12), Rosca Martelo (3x10-12), Abdominal Infra/Prancha (3x12-15 ou 45s) + Caminhada inclinada (15-20 min).",
-            "Quarta": "Futebol: Condicionamento/HIIT nativo. Aquecimento dinâmico obrigatório de 10 min.",
-            "Quinta": "Pernas Completas: Agachamento Livre/Leg Press 45° (4x8-10), RDL Stiff (3x8-10), Cadeira Extensora (3x10-12), Mesa Flexora (3x10-12), Gêmeos em Pé (4x12-15).",
-            "Sexta": "Descanso Total.",
-            "Sábado": "Tronco Superior (Foco Peitoral): Supino Inclinado Barra (4x8-10), Paralelas ou Supino Reto Halter (3x8-10), Remada Serrote (3x8-10), Elevação Lateral (4x12-15), Super-série Rosca Alternada + Tríceps Francês (3x10-12) + Caminhada inclinada (15-20 min).",
-            "Domingo": "Descanso Total."
-        },
-        "neat": "Meta de 8.000 a 10.000 passos diários (pausas a cada 1h no trabalho)."
-    }
-}
-
+## Estrutura
+```
+src/
+├── db/
+│   ├── index.ts           cliente LibSQL + drizzle
+│   └── schema.ts          tabelas e MAX_GROUPS
+├── lib/
+│   ├── jwt.ts             signToken/verifyToken, COOKIE_NAME (gifty_session), SESSION_SECONDS
+│   ├── auth.ts            createSession/destroySession, getCurrentUser (cache), requireUser (server-only)
+│   ├── access.ts          groupIdsOf, sharedGroupIds, sharesGroup, isAdminOver (server-only)
+│   ├── resetToken.ts      newResetToken/hashToken (redefinição de senha; testado em resetToken.test.ts)
+│   ├── mail.ts            sendMail (SMTP via nodemailer) e appUrl
+│   ├── validation.ts      EMAIL_RE, PASSWORD_RULES, passwordValid (usado no cliente e servidor)
+│   ├── secretSanta.ts     drawSecretSanta: embaralhamento Fisher-Yates + ciclo único
+│   ├── secretSanta.test.ts testes do sorteio
+│   └── actions/           Server Actions ("use server"): auth, profile, groups, wishlist
+├── middleware.ts          protege /groups, /wishlist, /profile; redireciona /login e /register se logado; /forgot-password e /reset-password são públicas
+├── components/            formulários, Nav, MemberItem, SecretSantaForm, ConfirmButton etc.
+└── app/
+    ├── page.tsx, login/, register/, forgot-password/, reset-password/ (públicas)
+    └── (app)/             layout autenticado: groups, groups/[id], groups/[id]/members/[userId], wishlist, profile
 ```
 
----
+## Regras Críticas de Segurança e Privacidade
+1. **Sigilo da reserva no servidor:** `/wishlist` (lista do próprio usuário) **nunca** consulta `reservations`. `groups/[id]/members/[userId]` redireciona para `/wishlist` se o alvo for o próprio visitante. Não adicione joins com `reservations` em telas do dono.
+2. **Sigilo do amigo secreto:** telas só consultam a linha com `giverId = usuário logado`. Nunca exponha pares de outros membros (inclusive ao criador).
+3. **Autorização sempre no servidor:** toda Server Action chama `requireUser()`; ações de criador usam `requireOwner(groupId)`; filtros de escrita incluem `userId` do dono (ex.: `updateItem`, `deleteItem`). Reservar exige `sharesGroup` e proíbe reservar item próprio. Páginas de grupo/membro verificam a participação do visitante (e do alvo) no grupo da URL.
+4. **Senhas:** só existem como hash bcrypt; nunca registre senhas ou tokens de reset em texto claro (no banco só o SHA-256 do token).
+5. **Login:** `bcrypt.compare` roda sempre (hash falso se o e-mail não existe) para evitar enumeração por tempo; mensagem de erro genérica. Não há rate limit.
+6. **Cookie:** httpOnly, `sameSite: lax`, `secure` em produção.
+7. `lib/auth.ts` e `lib/access.ts` usam `server-only`; `jwt.ts` não, pois é usado no middleware (edge).
 
-## Fluxo de Onboarding e Autenticação no Telegram
+## Convenções de Código
+- Textos de UI, mensagens de erro e comentários em **português**.
+- Server Actions de formulário com estado seguem `(_: FormState, formData) => Promise<FormState>` (`FormState = { error?: string } | undefined`) e são usadas com `useFormState`; ações de botão recebem ids via `.bind(null, id)`.
+- Operações multi-tabela usam `db.batch([...])`. Não confie em FK/cascade: o código apaga dependentes explicitamente (ex.: `deleteItem` apaga a reserva, `deleteGroup` apaga sorteio e membros).
+- Após mutações, chame `revalidatePath`.
+- Consultas Drizzle diretamente nas páginas (Server Components) e nas actions; não há camada de repositório.
+- Estilo com Tailwind e classes utilitárias próprias em `globals.css` (`card`, `btn-ghost`, paleta `sage`). Componentes cliente são só os que precisam de interatividade (`"use client"`).
+- Testes ficam ao lado do código (`*.test.ts`); `drawSecretSanta` e `lib/resetToken.ts` são cobertos.
 
-1. **Checagem Inicial:**
-* A cada nova mensagem, o sistema consulta a tabela `usuarios` no Supabase filtrando pelo `telegram_id`.
-* Se o ID **não existir**, o bot envia a mensagem de onboarding:
-> *"Olá! Sou o **Soma**. Para configurarmos seu acesso, me diga: estou falando com o **Caio** ou com a **Bel**?"*
-
-
-
-
-2. **Vinculação do Perfil:**
-* Ao receber a resposta ("Caio" ou "Bel"), salva-se o registro na tabela `usuarios` (`telegram_id`, `perfil`: `"caio"` ou `"bel"`).
-* Nas mensagens seguintes, o bot recupera o perfil vinculado e injeta as regras e metas contidas em `profiles.py`.
-
-
-
----
-
-## Estrutura Enxuta do Banco de Dados (Supabase)
-
-### Tabela: `usuarios`
-
-* `telegram_id`: bigint (PK)
-* `perfil`: text (`"caio"` ou `"bel"`)
-* `created_at`: timestamptz (Padrão: `NOW()`)
-
-### Tabela: `registro_diario`
-
-* `id`: uuid (PK, Padrão: `gen_random_uuid()`)
-* `telegram_id`: bigint (FK -> usuarios.telegram_id)
-* `data`: date (Padrão: `CURRENT_DATE`)
-* `calorias_consumidas`: int (Padrão: 0)
-* `proteina_consumida`: int (Padrão: 0)
-
----
-
-## Diretrizes e Regras de Negócio da IA
-
-1. **Gestão de Dieta:**
-* **Regra da Quantidade:** Se o usuário reportar ingestão de alimento SEM informar peso/porção, **não calcule**. Pergunte a quantidade exata primeiro.
-* **Cálculo e Saldo:** Quando a quantidade for informada, extraia calorias e proteínas via *Structured Output*, atualize os acumulados em `registro_diario` no Supabase e responda com o saldo restante (`Meta do perfil - Consumido hoje`).
-
-
-2. **Substituição de Treino:**
-* **Regra das 3 Opções:** Ao receber um pedido para substituir um exercício da ficha cadastrada do usuário ativo (em `profiles.py`), a IA deve sugerir **exatamente 3 opções** com estrita equivalência biomecânica e cinesiológica.
-
-
-
----
-
-## Estrutura do Repositório
-
-```
-├── main.py             # Handler do Telegram (Webhook/Polling e roteamento por ID)
-├── profiles.py         # Configuração estática dos perfis Caio e Bel (prompts e treinos)
-├── config.py           # Variáveis de ambiente
-├── database.py         # Conexão enxuta com Supabase (vínculo de usuário e diário)
-├── ai_engine.py        # Prompts do Soma, chamadas Gemini e Structured Output
-├── requirements.txt    # Dependências (python-telegram-bot, google-genai, supabase)
-└── vercel.json         # Configuração de deployment serverless
-
-```
-
----
-
-## Variáveis de Ambiente (`.env`)
-
-```env
-TELEGRAM_BOT_TOKEN="seu_token_telegram"
-GEMINI_API_KEY="sua_chave_gemini_ai_studio"
-SUPABASE_URL="[https://seu-projeto.supabase.co](https://seu-projeto.supabase.co)"
-SUPABASE_KEY="sua_chave_anon_supabase"
-
-```
-
----
-
-## Comandos de Desenvolvimento
-
-* **Instalar dependências:** `pip install -r requirements.txt`
-* **Executar localmente:** `python main.py`
+## Deploy
+Vercel + Turso: cadastrar as variáveis de ambiente na Vercel, rodar `npm run db:push` localmente apontando para o banco Turso e fazer o deploy. `next.config.mjs` marca `@libsql/client` e `bcryptjs` como `serverComponentsExternalPackages`.

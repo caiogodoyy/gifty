@@ -7,6 +7,7 @@ Stack: Next.js 14 (App Router, Server Actions) · Tailwind CSS · Turso (LibSQL)
 ## Funcionalidades
 
 - **Conta:** cadastro e login com e-mail e senha (hash bcrypt, sessão JWT de 30 dias).
+- **Esqueci a senha:** link de redefinição por e-mail (SMTP), válido por 60 min e de uso único.
 - **Perfil:** tamanhos de blusa, calça e calçado, mais observações livres.
 - **Lista de desejos:** adicionar, editar e remover itens (nome, descrição, link).
 - **Reserva secreta:** outros membros reservam itens (badge amarelo "Reservado"); o dono da lista não vê nem se há reservas.
@@ -32,6 +33,8 @@ npm run dev              # http://localhost:3000
 | `TURSO_DATABASE_URL` | URL do banco (`libsql://...`) ou `file:local.db` para dev local    |
 | `TURSO_AUTH_TOKEN`   | Token do Turso (não necessário com `file:`)                        |
 | `AUTH_SECRET`        | Segredo do JWT, mínimo 16 caracteres (`openssl rand -base64 32`)   |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Envio do e-mail de redefinição; sem `SMTP_HOST` em dev o link vai pro console |
+| `EMAIL_FROM`, `APP_URL` | Remetente (padrão `SMTP_USER`) e URL pública usada no link de redefinição            |
 
 ### Criando o banco no Turso
 
