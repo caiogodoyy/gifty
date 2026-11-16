@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { EMAIL_RE, passwordValid } from "@/lib/validation";
+import { AVATAR_EMOJIS } from "@/lib/avatars";
 import type { FormState } from "./auth";
 
 const field = (f: FormData, k: string, max: number) => {
@@ -27,6 +28,15 @@ export async function updateProfile(_: FormState, formData: FormData): Promise<F
     .where(eq(users.id, user.id));
   revalidatePath("/profile");
   return { error: undefined };
+}
+
+
+/** Troca o avatar por um emoji da lista fixa (vazio = inicial do nome). Nenhuma imagem é aceita. */
+export async function setAvatarEmoji(emoji: string) {
+  const user = await requireUser();
+  const value = AVATAR_EMOJIS.includes(emoji) ? emoji : null;
+  await db.update(users).set({ avatarEmoji: value }).where(eq(users.id, user.id));
+  revalidatePath("/", "layout");
 }
 
 const text = (f: FormData, k: string) => {

@@ -13,4 +13,4 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/groups/:path*", "/wishlist/:path*", "/profile/:path*", "/login", "/register", "/forgot-password", "/reset-password"] };
+export const config = { matcher: ["/groups/:path*", "/wishlist/:path*", "/profile/:path*", "/help/:path*", "/login", "/register", "/forgot-password", "/reset-password"] };

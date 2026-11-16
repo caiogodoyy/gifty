@@ -20,24 +20,24 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
       <form action={accAction} className="card space-y-4">
         <h2 className="font-semibold">Dados da conta</h2>
         <label className="block space-y-1 text-sm">
-          <span className="text-stone-600">Nome</span>
+          <span className="text-ink-soft">Nome</span>
           <input className="input" name="name" value={newName} onChange={(e) => setNewName(e.target.value)} autoComplete="name" required />
         </label>
         <label className="block space-y-1 text-sm">
-          <span className="text-stone-600">E-mail</span>
+          <span className="text-ink-soft">E-mail</span>
           <input className="input" type="email" name="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" required />
-          {!emailOk && <span className="text-xs text-red-600">✗ Informe um e-mail válido</span>}
+          {!emailOk && <span className="text-xs text-terracotta-700">✗ Informe um e-mail válido</span>}
         </label>
         {emailChanged && (
           <label className="block space-y-1 text-sm">
-            <span className="text-stone-600">Senha atual (necessária para trocar o e-mail)</span>
+            <span className="text-ink-soft">Senha atual (necessária para trocar o e-mail)</span>
             <input className="input" type="password" name="currentPassword" autoComplete="current-password" required />
           </label>
         )}
-        {accState?.error && <p className="text-sm text-red-600">{accState.error}</p>}
+        {accState?.error && <p className="text-sm text-terracotta-700">{accState.error}</p>}
         <div className="flex items-center gap-3">
           <SubmitButton disabled={!emailOk || newName.trim().length < 2}>Salvar dados</SubmitButton>
-          {accState && !accState.error && <span className="text-sm text-stone-500">Salvo ✓</span>}
+          {accState && !accState.error && <span className="text-sm text-ink-soft">Salvo ✓</span>}
         </div>
       </form>
 
@@ -56,15 +56,15 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
         />
         <ul className="space-y-0.5 text-xs" aria-live="polite">
           {PASSWORD_RULES.map((r) => (
-            <li key={r.id} className={r.test(newPassword) ? "text-sage-700" : "text-stone-500"}>
+            <li key={r.id} className={r.test(newPassword) ? "text-sage-700" : "text-ink-soft"}>
               {r.test(newPassword) ? "✓" : "○"} {r.label}
             </li>
           ))}
         </ul>
-        {pwState?.error && <p className="text-sm text-red-600">{pwState.error}</p>}
+        {pwState?.error && <p className="text-sm text-terracotta-700">{pwState.error}</p>}
         <div className="flex items-center gap-3">
           <SubmitButton disabled={!passwordValid(newPassword)}>Alterar senha</SubmitButton>
-          {pwState && !pwState.error && <span className="text-sm text-stone-500">Senha alterada ✓</span>}
+          {pwState && !pwState.error && <span className="text-sm text-ink-soft">Senha alterada ✓</span>}
         </div>
       </form>
     </>

@@ -7,6 +7,9 @@ import { requireUser } from "@/lib/auth";
 import { deleteGroup, leaveGroup, regenerateCode, removeMember } from "@/lib/actions/groups";
 import { SecretSantaForm } from "@/components/SecretSantaForm";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { Avatar } from "@/components/Avatar";
+import { PageBack } from "@/components/PageBack";
+import { ChevronRight } from "@/components/Icons";
 
 export default async function GroupPage({ params }: { params: { id: string } }) {
   const user = await requireUser();
@@ -21,7 +24,7 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
   if (!group) notFound();
 
   const members = await db
-    .select({ id: users.id, name: users.name })
+    .select({ id: users.id, name: users.name, emoji: users.avatarEmoji })
     .from(groupMembers)
     .innerJoin(users, eq(users.id, groupMembers.userId))
     .where(eq(groupMembers.groupId, group.id))
@@ -40,9 +43,9 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
   return (
     <>
       <div>
-        <Link href="/groups" className="text-sm text-stone-500 hover:underline">← Grupos</Link>
+        <PageBack href="/groups" label="Grupos" />
         <div className="mt-1 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{group.name}</h1>
+          <h1 className="page-title">{group.name}</h1>
           <SecretSantaForm
             groupId={group.id}
             isOwner={isOwner}
@@ -55,7 +58,7 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
       {isOwner && (
         <section className="card space-y-3">
           <h2 className="font-semibold">Código de convite</h2>
-          <p className="select-all rounded-xl bg-sage-50 px-4 py-3 text-center font-mono text-xl tracking-widest">
+          <p className="select-all rounded-xl bg-sage-100 px-4 py-3 text-center font-mono text-xl tracking-widest">
             {group.inviteCode}
           </p>
           <form action={regenerateCode.bind(null, group.id)}>
@@ -67,22 +70,24 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
       )}
 
       <section className="space-y-3">
-        <h2 className="font-semibold">Membros ({members.length})</h2>
-        <p className="text-sm text-stone-500">Clique em um membro para ver a lista de desejos.</p>
+        <h2 className="text-lg font-bold">Membros ({members.length})</h2>
+        <p className="text-sm text-ink-soft">Clique em um membro para ver a lista de desejos.</p>
         <ul className="space-y-2">
           {members.map((m) => {
             const me = m.id === user.id;
             return (
-              <li key={m.id} className="card flex items-center gap-2 !p-0 transition hover:border-sage-200 hover:bg-sage-50">
+              <li key={m.id} className="card flex items-center gap-2 !p-0 transition hover:shadow-md">
                 <Link
                   href={me ? "/wishlist" : `/groups/${group.id}/members/${m.id}`}
-                  className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl p-3"
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-3"
                 >
-                  <span className="truncate font-medium">
+                  <Avatar name={m.name} emoji={m.emoji} size={36} />
+                  <span className="min-w-0 flex-1 truncate font-medium">
                     {m.name}
-                    {me && <span className="text-stone-400"> (você)</span>}
-                    {m.id === group.ownerId && <span className="ml-2 text-xs font-normal text-stone-500">criador</span>}
+                    {me && <span className="text-ink-soft"> (você)</span>}
+                    {m.id === group.ownerId && <span className="ml-2 text-xs font-normal text-ink-soft">criador</span>}
                   </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-ink-soft" />
                 </Link>
                 {isOwner && !me && (
                   <form action={removeMember.bind(null, group.id, m.id)} className="pr-3">

@@ -54,23 +54,23 @@ export function SecretSantaForm({ groupId, isOwner, members, receiverName }: Pro
           <div role="dialog" aria-modal="true" aria-labelledby="santa-title" className="card w-full max-w-md space-y-4 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <h2 id="santa-title" className="text-lg font-semibold">🎅 Amigo secreto</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Fechar" className="text-stone-400 hover:text-stone-700">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Fechar" className="text-ink-soft hover:text-ink-soft">
                 ✕
               </button>
             </div>
 
             {drawn && (
               <div className="rounded-xl bg-terracotta-50 px-4 py-5 text-center">
-                <p className="text-sm text-stone-600">Você deve presentear</p>
+                <p className="text-sm text-ink-soft">Você deve presentear</p>
                 <p className="mt-1 text-2xl font-semibold text-terracotta-700">{receiverName}</p>
-                <p className="mt-2 text-xs text-stone-500">Guarde segredo! 🤫</p>
+                <p className="mt-2 text-xs text-ink-soft">Guarde segredo! 🤫</p>
               </div>
             )}
 
             {isOwner && (
               <>
                 {!drawn && (
-                  <p className="text-sm text-stone-600">
+                  <p className="text-sm text-ink-soft">
                     Cada membro é sorteado para presentear uma pessoa do grupo. Depois do sorteio, todos veem quem tiraram.
                   </p>
                 )}
@@ -82,7 +82,7 @@ export function SecretSantaForm({ groupId, isOwner, members, receiverName }: Pro
                     ))}
                   </ul>
                 </div>
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm text-terracotta-700">{error}</p>}
                 {okMsg && <p className="text-sm text-sage-700">✓ {okMsg}</p>}
               </>
             )}

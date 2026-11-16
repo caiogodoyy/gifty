@@ -11,6 +11,7 @@ export const users = sqliteTable("users", {
   pantsSize: text("pants_size"),
   shoeSize: text("shoe_size"),
   notes: text("notes"),
+  avatarEmoji: text("avatar_emoji"), // emoji escolhido; null = inicial do nome
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(now),
 });
 
@@ -38,6 +39,7 @@ export const items = sqliteTable("items", {
   name: text("name").notNull(),
   description: text("description"),
   url: text("url"),
+  imageUrl: text("image_url"), // URL externa ou data URL (upload redimensionado no cliente)
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(now),
 });
 

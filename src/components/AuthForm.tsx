@@ -18,7 +18,7 @@ export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?
 
   return (
     <form action={action} className="card space-y-4">
-      <h1 className="text-xl font-semibold">{isLogin ? "Entrar" : "Criar conta"}</h1>
+      <h1 className="text-2xl font-bold">{isLogin ? "Entrar" : "Criar conta"}</h1>
       {!isLogin && <input className="input" name="name" placeholder="Seu nome" autoComplete="name" required />}
       <div>
         <input
@@ -33,7 +33,7 @@ export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?
           required
         />
         {!isLogin && email && (emailTouched || emailOk) && (
-          <p className={`mt-1 text-xs ${emailOk ? "text-sage-700" : "text-red-600"}`}>
+          <p className={`mt-1 text-xs ${emailOk ? "text-sage-700" : "text-terracotta-700"}`}>
             {emailOk ? "✓ E-mail válido" : "✗ Informe um e-mail válido (ex.: nome@dominio.com)"}
           </p>
         )}
@@ -53,7 +53,7 @@ export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?
           {PASSWORD_RULES.map((r) => {
             const ok = r.test(password);
             return (
-              <li key={r.id} className={ok ? "text-sage-700" : "text-stone-500"}>
+              <li key={r.id} className={ok ? "text-sage-700" : "text-ink-soft"}>
                 {ok ? "✓" : "○"} {r.label}
               </li>
             );
@@ -62,13 +62,13 @@ export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?
       )}
       {isLogin && (
         <p className="text-right text-sm">
-          <Link href="/forgot-password" className="text-stone-500 underline">Esqueceu a senha?</Link>
+          <Link href="/forgot-password" className="text-ink-soft underline">Esqueceu a senha?</Link>
         </p>
       )}
       {notice && !state?.error && <p className="text-sm text-sage-700">{notice}</p>}
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="text-sm text-terracotta-700">{state.error}</p>}
       <SubmitButton disabled={!canSubmit} className="btn w-full">{isLogin ? "Entrar" : "Cadastrar"}</SubmitButton>
-      <p className="text-center text-sm text-stone-500">
+      <p className="text-center text-sm text-ink-soft">
         {isLogin ? (
           <>Novo por aqui? <Link href="/register" className="underline">Crie sua conta</Link></>
         ) : (

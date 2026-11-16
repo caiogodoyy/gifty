@@ -1,10 +1,13 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { groupMembers, groups, items, reservations, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { isAdminOver } from "@/lib/access";
+import { Avatar } from "@/components/Avatar";
+import { PageBack } from "@/components/PageBack";
+import { SizeChips } from "@/components/SizeChips";
+import { GiftIcon } from "@/components/Icons";
 import { MemberItem } from "@/components/MemberItem";
 
 export default async function MemberPage({ params }: { params: { id: string; userId: string } }) {
@@ -29,6 +32,7 @@ export default async function MemberPage({ params }: { params: { id: string; use
       name: items.name,
       description: items.description,
       url: items.url,
+      imageUrl: items.imageUrl,
       reservedBy: reservations.reservedBy,
       reserverName: users.name,
     })
@@ -38,36 +42,36 @@ export default async function MemberPage({ params }: { params: { id: string; use
     .where(eq(items.userId, member.id))
     .orderBy(desc(items.createdAt));
 
+  const first = member.name.split(" ")[0];
   const admin = await isAdminOver(viewer.id, member.id);
-  const sizes: [string, string | null][] = [
-    ["Blusa / Camisa", member.shirtSize],
-    ["Calça / Bermuda", member.pantsSize],
-    ["Calçado", member.shoeSize],
-  ];
 
   return (
     <>
-      <div>
-        <Link href={`/groups/${group.id}`} className="text-sm text-stone-500 hover:underline">← {group.name}</Link>
-        <h1 className="mt-1 text-2xl font-semibold">{member.name}</h1>
-      </div>
+      <PageBack href={`/groups/${group.id}`} label={group.name} />
 
-      <section className="card space-y-3">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {sizes.map(([label, value]) => (
-            <div key={label} className="rounded-xl bg-sage-50 p-3">
-              <p className="text-xs text-stone-500">{label}</p>
-              <p className="mt-1 font-semibold">{value || "—"}</p>
-            </div>
-          ))}
+      <section className="flex items-center gap-4">
+        <Avatar name={member.name} emoji={member.avatarEmoji} size={72} />
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-bold">{member.name}</h1>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-soft">
+            <GiftIcon className="h-4 w-4" /> {list.length} {list.length === 1 ? "desejo" : "desejos"}
+          </p>
         </div>
-        {member.notes && <p className="whitespace-pre-line text-sm text-stone-600">{member.notes}</p>}
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-semibold">Lista de desejos</h2>
+        <h2 className="text-lg font-bold">Medidas de {first}</h2>
+        <SizeChips shirt={member.shirtSize} pants={member.pantsSize} shoe={member.shoeSize} />
+        {!member.shirtSize && !member.pantsSize && !member.shoeSize && (
+          <p className="text-sm text-ink-soft">Nenhuma medida informada.</p>
+        )}
+        {member.notes && <p className="whitespace-pre-line text-sm text-ink-soft">{member.notes}</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Desejos de {first}</h2>
         {list.length === 0 ? (
-          <p className="text-sm text-stone-500">{member.name} ainda não adicionou itens.</p>
+          <p className="text-sm text-ink-soft">{member.name} ainda não adicionou itens.</p>
         ) : (
           <ul className="space-y-3">
             {list.map((i) => (

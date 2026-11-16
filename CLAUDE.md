@@ -35,8 +35,9 @@
 ## Funcionalidades
 - **Conta:** cadastro/login com e-mail e senha; sessão JWT de 30 dias. Senha: 8+ caracteres, letras, números e ao menos uma maiúscula (`lib/validation.ts`, também usada para validação em tempo real nos formulários). Em `/profile` é possível editar nome/e-mail (trocar e-mail exige senha atual) e alterar a senha.
 - **Esqueci a senha:** `/forgot-password` envia um link (`/reset-password?token=...`) válido por 60 min e de uso único; só o SHA-256 do token fica em `password_resets`. A resposta é a mesma exista o e-mail ou não. Pedir novo link invalida os anteriores; redefinir apaga todos os tokens do usuário. Sessões JWT já emitidas **não** são invalidadas.
-- **Perfil:** tamanhos de blusa, calça e calçado + observações livres.
-- **Lista de desejos (`/wishlist`):** adicionar, editar e remover itens (nome ≤120, descrição ≤500, link ≤500; link sem protocolo recebe `https://`). A lista é **por usuário** e aparece em todos os grupos dele.
+- **UI (mobile-first, coluna `max-w-md`):** header com logo + avatar de iniciais (sem engrenagem), barra inferior fixa (Grupos / Minha Lista / Perfil) em `components/Nav.tsx` e botões flutuantes (`FloatingAction`: "+ Novo grupo", "+ Desejo"). Paleta terracota/sálvia/creme em `tailwind.config.ts` (`ink` = texto marrom).
+- **Perfil (`/profile`):** avatar (inicial do nome ou um emoji de `lib/avatars.ts` em `users.avatar_emoji`; fotos não são aceitas), nome, e-mail, "Editar Perfil" (`?secao=conta`: escolha de emoji, dados da conta e senha), "Minhas Medidas & Tamanhos" (`?secao=medidas`: blusa, calça, calçado + observações), "Ajuda & Suporte" (`/help`: o que é, por que usar, passo a passo e FAQ) e "Sair da conta". Não há seções de privacidade/notificações.
+- **Lista de desejos (`/wishlist`):** adicionar, editar e remover itens (nome ≤120, descrição ≤500, link ≤500; link sem protocolo recebe `https://`; imagem opcional **somente por URL** em `items.image_url`; o app não armazena nenhuma imagem, e URLs `data:` são ignoradas). A lista é **por usuário** e aparece em todos os grupos dele.
 - **Reserva secreta:** outros membros reservam itens na página do membro; badge amarelo "Reservado". O dono nunca vê reservas. Quem reservou pode cancelar; o criador do grupo também pode cancelar reservas de membros do seu grupo.
 - **Grupos:** máximo de `MAX_GROUPS = 3` por usuário (definido em `db/schema.ts`). Código de convite no formato `SOBRENOME-1234`.
   - Criador: vê e regera o código, remove membros, deleta o grupo, realiza/encerra o amigo secreto. Não pode sair (deve deletar).
@@ -45,10 +46,10 @@
 
 ## Modelo de Dados (`src/db/schema.ts`)
 IDs são `crypto.randomUUID()` (text); datas são `integer` modo `timestamp`.
-- `users` — id, name, email (unique), passwordHash (bcrypt), shirtSize, pantsSize, shoeSize, notes, createdAt
+- `users` — id, name, email (unique), passwordHash (bcrypt), shirtSize, pantsSize, shoeSize, notes, avatarEmoji, createdAt
 - `groups` — id, name, inviteCode (unique), ownerId → users, createdAt
 - `group_members` — PK (groupId, userId), joinedAt; cascade em groups/users
-- `items` — id, userId → users (cascade), name, description, url, createdAt
+- `items` — id, userId → users (cascade), name, description, url, imageUrl, createdAt
 - `reservations` — PK itemId (uma reserva por item), reservedBy → users, createdAt
 - `password_resets` — PK tokenHash (SHA-256), userId → users (cascade), expiresAt
 - `secret_santa` — PK (groupId, giverId), receiverId, createdAt
@@ -69,11 +70,11 @@ src/
 │   ├── secretSanta.ts     drawSecretSanta: embaralhamento Fisher-Yates + ciclo único
 │   ├── secretSanta.test.ts testes do sorteio
 │   └── actions/           Server Actions ("use server"): auth, profile, groups, wishlist
-├── middleware.ts          protege /groups, /wishlist, /profile; redireciona /login e /register se logado; /forgot-password e /reset-password são públicas
+├── middleware.ts          protege /groups, /wishlist, /profile, /help; redireciona /login e /register se logado; /forgot-password e /reset-password são públicas
 ├── components/            formulários, Nav, MemberItem, SecretSantaForm, ConfirmButton etc.
 └── app/
     ├── page.tsx, login/, register/, forgot-password/, reset-password/ (públicas)
-    └── (app)/             layout autenticado: groups, groups/[id], groups/[id]/members/[userId], wishlist, profile
+    └── (app)/             layout autenticado: groups, groups/[id], groups/[id]/members/[userId], wishlist, profile, help
 ```
 
 ## Regras Críticas de Segurança e Privacidade

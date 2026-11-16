@@ -3,14 +3,18 @@
 @tailwind utilities;
 
 @layer base {
-  body { @apply bg-cream-50 text-[#363838] antialiased; }
+  body { @apply bg-cream-50 text-ink antialiased; }
+  h1, h2, h3 { @apply text-ink; }
 }
 @layer components {
-  .card { @apply rounded-2xl border border-cream-200 bg-white p-5 shadow-sm; }
-  .input { @apply w-full rounded-xl border border-cream-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-sage-500 focus:ring-2 focus:ring-sage-200; }
-  .btn { @apply inline-flex items-center justify-center rounded-xl bg-sage-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sage-700 disabled:opacity-50; }
-  .btn-ghost { @apply inline-flex items-center justify-center rounded-xl border border-sage-200 bg-sage-50 px-3 py-2 text-sm text-sage-700 transition hover:bg-sage-100 disabled:opacity-50; }
-  .btn-danger { @apply inline-flex items-center justify-center rounded-xl border border-terracotta-200 bg-terracotta-50 px-3 py-2 text-sm text-terracotta-700 transition hover:bg-terracotta-100 disabled:opacity-50; }
-  .btn-terracotta { @apply inline-flex items-center justify-center rounded-xl bg-terracotta-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-terracotta-700 disabled:opacity-50; }
-  .badge-reserved { @apply inline-flex items-center gap-1 rounded-full border border-gold-200 bg-gold-100 px-2.5 py-0.5 text-xs font-medium text-gold-700; }
+  .card { @apply rounded-2xl border border-cream-200/70 bg-white p-4 shadow-[0_2px_10px_rgba(74,44,34,0.07)]; }
+  .input { @apply w-full rounded-xl border border-cream-300 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100; }
+  .btn { @apply inline-flex items-center justify-center rounded-full bg-terracotta-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-terracotta-700 disabled:opacity-50; }
+  .btn-ghost { @apply inline-flex items-center justify-center rounded-full border border-sage-200 bg-sage-50 px-3.5 py-2 text-sm text-sage-700 transition hover:bg-sage-100 disabled:opacity-50; }
+  .btn-outline { @apply inline-flex items-center justify-center rounded-full border border-ink/40 px-5 py-1.5 text-sm text-ink transition hover:bg-cream-100; }
+  .btn-danger { @apply inline-flex items-center justify-center rounded-full border border-terracotta-200 bg-terracotta-50 px-3.5 py-2 text-sm text-terracotta-700 transition hover:bg-terracotta-100 disabled:opacity-50; }
+  .btn-terracotta { @apply btn; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-lg bg-sage-100 px-3 py-1.5 text-sm text-ink; }
+  .badge-reserved { @apply inline-flex items-center gap-1 rounded-full bg-gold-100 px-2.5 py-0.5 text-xs font-medium text-gold-700; }
+  .page-title { @apply text-2xl font-bold text-ink; }
 }

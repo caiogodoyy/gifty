@@ -29,14 +29,14 @@ export function ResetPasswordForm({ token }: { token: string }) {
         {PASSWORD_RULES.map((r) => {
           const ok = r.test(password);
           return (
-            <li key={r.id} className={ok ? "text-sage-700" : "text-stone-500"}>
+            <li key={r.id} className={ok ? "text-sage-700" : "text-ink-soft"}>
               {ok ? "✓" : "○"} {r.label}
             </li>
           );
         })}
       </ul>
       {state?.error && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-terracotta-700">
           {state.error} <Link href="/forgot-password" className="underline">Pedir novo link</Link>
         </p>
       )}

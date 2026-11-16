@@ -20,7 +20,17 @@ function parse(formData: FormData) {
       url = null;
     }
   }
-  return { name, description, url };
+  // imagem: somente URL http(s); nada é enviado nem armazenado
+  let imageUrl: string | null = String(formData.get("image") ?? "").trim().slice(0, 500) || null;
+  if (imageUrl) {
+    if (!/^https?:\/\//i.test(imageUrl)) imageUrl = `https://${imageUrl}`;
+    try {
+      new URL(imageUrl);
+    } catch {
+      imageUrl = null;
+    }
+  }
+  return { name, description, url, imageUrl };
 }
 
 export async function addItem(formData: FormData) {

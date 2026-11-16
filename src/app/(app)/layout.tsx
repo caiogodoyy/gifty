@@ -1,12 +1,16 @@
-import { Nav } from "@/components/Nav";
+import { AppHeader } from "@/components/AppHeader";
+import { BottomNav } from "@/components/Nav";
 import { requireUser } from "@/lib/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
     <>
-      <Nav name={user.name} />
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-md space-y-5 px-4 pb-40">
+        <AppHeader name={user.name} emoji={user.avatarEmoji} />
+        {children}
+      </main>
+      <BottomNav />
     </>
   );
 }
